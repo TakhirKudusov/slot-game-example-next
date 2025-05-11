@@ -1,103 +1,191 @@
-import Image from "next/image";
+"use client";
+
+import {
+  config,
+  customGameSession,
+  customGameSessionSerializer,
+  SlotSymbols,
+} from "@/app/_lib/config";
+import { SyntheticEvent, useEffect, useState } from "react";
+import * as POKIE from "pokie";
+import {
+  SymbolsCombination,
+  SymbolsCombinationsAnalyzer,
+  VideoSlotWinCalculator,
+} from "pokie";
+import { getInitialData, initializeData } from "@/app/_lib/data";
+
+initializeData(customGameSession, customGameSessionSerializer);
+
+const simulationConfig = new POKIE.SimulationConfig();
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [rounds, setRounds] = useState<string>("100000");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // static
+  const [totalCombinations, setTotalCombinations] = useState<number>(0);
+  const [winningCombinations, setWinningCombinations] = useState<number>(0);
+  const [hitFrequency, setHitFrequency] = useState<number>(0);
+  const [calculatedRTP, setCalculatedRTP] = useState<number>(0);
+  const [totalPayout, setTotalPayout] = useState<number>(0);
+
+  // simulation
+  const [averageRTP, setAverageRTP] = useState<number>(0);
+  const [averagePayout, setAveragePayout] = useState<number>(0);
+  const [payoutDeviation, setPayoutDeviation] = useState<number>(0);
+  const [averageWinPayout, setAverageWinPayout] = useState<number>(0);
+  const [winPayoutDeviation, setWinPayoutDeviation] = useState<number>(0);
+
+  const handleRunSimulation = () => {
+    simulationConfig.setNumberOfRounds(Number.parseInt(rounds));
+    const simulation = new POKIE.Simulation(
+      customGameSession,
+      simulationConfig,
+    );
+    simulation.run();
+
+    setAverageRTP(simulation.getAverageRtp());
+    setAveragePayout(simulation.getAveragePayout());
+    setPayoutDeviation(simulation.getPayoutsStandardDeviation());
+    setAverageWinPayout(simulation.getAveragePayout(false));
+    setWinPayoutDeviation(simulation.getPayoutsStandardDeviation(false));
+  };
+
+  useEffect(() => {
+    try {
+      const allReelsCombinations =
+        SymbolsCombinationsAnalyzer.getAllPossibleSymbolsCombinations(
+          config.getSymbolsSequences(),
+          config.getReelsSymbolsNumber(),
+        );
+
+      setTotalCombinations(allReelsCombinations.length);
+
+      const allWinsData = [];
+      let totalPayout = 0;
+      allReelsCombinations.forEach((combination) => {
+        const wc = new VideoSlotWinCalculator(config);
+        wc.calculateWin(
+          config.getBet(),
+          new SymbolsCombination().fromMatrix(combination),
+        );
+        if (wc.getWinAmount() > 0) {
+          allWinsData.push(wc);
+          totalPayout += wc.getWinAmount();
+        }
+      });
+
+      setTotalPayout(totalPayout);
+      setWinningCombinations(allWinsData.length);
+      setHitFrequency(allWinsData.length / allReelsCombinations.length);
+      setCalculatedRTP(totalPayout / allReelsCombinations.length);
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const formatter = new Intl.NumberFormat();
+
+  const handleChangeInput = (e: SyntheticEvent<HTMLInputElement>) => {
+    const num = Number.parseInt(e.currentTarget.value);
+
+    if (Number.MAX_SAFE_INTEGER < num) return;
+
+    setRounds(e.currentTarget.value);
+  };
+
+  useEffect(() => {
+    (async () => {
+      console.log(await getInitialData());
+    })();
+  }, []);
+
+  return (
+    <div className="flex flex-col w-full p-10 bg-blue-100">
+      <div className="bg-green-100 p-5">
+        <h2 className="text-2xl font-semibold">Balance: {}</h2>
+      </div>
+      <div className="bg-blue-200 p-5 space-y-5">
+        <div>
+          <h2 className="text-2xl font-semibold">Available symbols:</h2>
+          <ul className="space-y-1.5">
+            {Object.values(SlotSymbols).map((el) => (
+              <li key={el} className="underline">
+                {el}
+              </li>
+            ))}
+          </ul>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <h2 className="text-3xl font-semibold">Static results:</h2>
+        <div>
+          <h2 className="text-2xl font-semibold">Total combinations:</h2>
+          <p>{formatter.format(totalCombinations)}</p>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold">
+            Total payout to user (bet = 1):
+          </h2>
+          <p>{formatter.format(totalPayout)}</p>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold">
+            Total winning combinations:
+          </h2>
+          <p>{formatter.format(winningCombinations)}</p>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold">Calculated hit frequency:</h2>
+          <p>{formatter.format(hitFrequency)}</p>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold">Calculated RTP:</h2>
+          <p>{formatter.format(calculatedRTP * 100)}%</p>
+        </div>
+        <h2 className="text-3xl font-semibold">
+          Simulation results for {formatter.format(Number.parseInt(rounds))}:
+        </h2>
+        <div>
+          <h2 className="text-2xl font-semibold">Average RTP:</h2>
+          <p>{formatter.format(averageRTP * 100)}%</p>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold">Average payout per bet:</h2>
+          <p>{formatter.format(averagePayout)}</p>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold">
+            Payouts standard deviation:
+          </h2>
+          <p>{formatter.format(payoutDeviation)}</p>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold">
+            Average payout without non-winning rounds:
+          </h2>
+          <p>{formatter.format(averageWinPayout)}</p>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold">
+            Payouts standard deviation without non-winning rounds:
+          </h2>
+          <p>{formatter.format(winPayoutDeviation)}</p>
+        </div>
+        <div className="flex flex-col space-y-1.5">
+          <label htmlFor="rounds-input">Type number of rounds:</label>
+          <input
+            className="bg-red-200 border-2 rounds-input"
+            value={rounds}
+            onChange={handleChangeInput}
+            type="number"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <button
+            onClick={handleRunSimulation}
+            className="bg-red-500 text-white p-1 border-2 border-black cursor-pointer"
+          >
+            Run simulation
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
