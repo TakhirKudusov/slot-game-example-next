@@ -1,0 +1,1 @@
+export { SlotStaticData } from './ui';

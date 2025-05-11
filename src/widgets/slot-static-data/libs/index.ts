@@ -1,0 +1,1 @@
+export { useStaticData } from './hooks';

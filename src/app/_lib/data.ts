@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   VideoSlotInitialNetworkData,
@@ -9,7 +9,7 @@ import {
   VideoSlotWithFreeGamesRoundNetworkData,
   VideoSlotWithFreeGamesSession,
   VideoSlotWithFreeGamesSessionSerializer,
-} from "pokie";
+} from 'pokie';
 
 let localSession: VideoSlotSession | VideoSlotWithFreeGamesSession;
 let localSerializer:
