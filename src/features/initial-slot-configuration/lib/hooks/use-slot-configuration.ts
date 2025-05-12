@@ -40,8 +40,8 @@ export const useSlotConfiguration = () => {
     dispatch(
       setSymbols({
         availableSymbols: Object.values(SlotSymbol),
-        wildSymbols: [SlotSymbol.CROKODILO_WILD],
-        scatterSymbols: [SlotSymbol.GUSINI_SCATTER],
+        wildSymbols: [SlotSymbol.GRAPE_SCATTER],
+        scatterSymbols: [SlotSymbol.BANANA_SCATTER],
       }),
     );
 
@@ -49,7 +49,7 @@ export const useSlotConfiguration = () => {
 
     dispatch(
       setSequence({
-        scatterSymbol: SlotSymbol.GUSINI_SCATTER,
+        scatterSymbol: SlotSymbol.BANANA_SCATTER,
         symbolsNumbers: DEFAULT_SYMBOLS_NUMBERS,
       }),
     );
