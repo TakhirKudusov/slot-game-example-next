@@ -1,9 +1,11 @@
 'use client';
 
-import { FC, ReactNode } from 'react';
+import { VideoSlotSession } from 'pokie';
+import { FC, ReactNode, useEffect } from 'react';
 
 import { useSlotConfiguration } from '@/features/initial-slot-configuration';
 
+import { setSession } from '@/entities/slot-session';
 import { SlotUiName, setCurrentTab } from '@/entities/slot-ui';
 
 import { StateName, useAppDispatch, useAppSelector } from '@/shared/model';
@@ -21,6 +23,12 @@ const Layout: FC<Props> = ({ slotGameUi, slotStatUi }) => {
 
   const dispatch = useAppDispatch();
 
+  const { config, isReady } = useAppSelector(
+    (state) => state[StateName.SLOT_CONFIG],
+  );
+
+  const { session } = useAppSelector((state) => state[StateName.SLOT_SESSION]);
+
   const handleClickButton = (value: SlotUiName) => () => {
     dispatch(setCurrentTab(value));
   };
@@ -33,6 +41,10 @@ const Layout: FC<Props> = ({ slotGameUi, slotStatUi }) => {
         return slotStatUi;
     }
   };
+
+  useEffect(() => {
+    if (isReady && !session) dispatch(setSession(new VideoSlotSession(config)));
+  }, [isReady, session]);
 
   return (
     <>

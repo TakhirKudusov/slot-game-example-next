@@ -1,5 +1,6 @@
-import { VideoSlotSession } from 'pokie';
+import { VideoSlotSession, VideoSlotSessionSerializer } from 'pokie';
 
 export type SlotSessionState = {
-  session: VideoSlotSession;
+  session: VideoSlotSession | null;
+  serializer: VideoSlotSessionSerializer;
 };

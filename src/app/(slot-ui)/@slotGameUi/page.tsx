@@ -1,5 +1,7 @@
+import { SlotGameUi } from '@/views/slot-game-ui';
+
 const Page = () => {
-  return <></>;
+  return <SlotGameUi />;
 };
 
 export default Page;

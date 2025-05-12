@@ -1,0 +1,1 @@
+export { SlotGameUi } from './ui';

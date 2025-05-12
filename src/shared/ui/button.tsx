@@ -12,7 +12,7 @@ export const Button: FC<PropsWithChildren & Props> = ({
     <button
       type="button"
       onClick={onClick}
-      className="border-black border-solid border-2 p-1 cursor-pointer bg-amber-100 hover:bg-amber-200 font-semibold transition active:bg-amber-300"
+      className="border-black border-solid border-2 p-2 cursor-pointer bg-amber-100 hover:bg-amber-200 font-semibold transition active:bg-amber-300"
     >
       {children}
     </button>

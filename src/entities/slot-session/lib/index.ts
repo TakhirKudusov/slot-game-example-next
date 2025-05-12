@@ -1,1 +1,1 @@
-export { SlotSessionState } from './types';
+export { type SlotSessionState } from './types';

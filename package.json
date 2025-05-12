@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.1",
+    "bignumber.js": "^9.3.0",
     "next": "15.3.2",
     "pokie": "^1.1.5",
     "react": "^19.1.0",

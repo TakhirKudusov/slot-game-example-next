@@ -1,1 +1,1 @@
-export { SlotSessionState } from './slot-session-state';
+export { type SlotSessionState } from './slot-session-state';
