@@ -1,14 +1,27 @@
 'use client';
 
-import { SimulationConfig } from 'pokie';
-import { SyntheticEvent, useState } from 'react';
+import { Simulation, SimulationConfig, VideoSlotSession } from 'pokie';
+import { SyntheticEvent, useEffect, useState } from 'react';
 
 import { SlotStaticData } from '@/widgets/slot-static-data';
+
+import { StateName, useAppSelector } from '@/shared/model';
 
 const simulationConfig = new SimulationConfig();
 
 export const SlotStatUi = () => {
   const [rounds, setRounds] = useState<string>('100000');
+  const [session, setSession] = useState<VideoSlotSession>();
+
+  const { config, isReady } = useAppSelector(
+    (state) => state[StateName.SLOT_CONFIG],
+  );
+
+  useEffect(() => {
+    if (isReady) setSession(new VideoSlotSession(config));
+  }, [isReady]);
+
+  // const customGameSessionSerializer = new VideoSlotSessionSerializer();
 
   // simulation
   const [averageRTP, setAverageRTP] = useState<number>(0);
@@ -18,15 +31,17 @@ export const SlotStatUi = () => {
   const [winPayoutDeviation, setWinPayoutDeviation] = useState<number>(0);
 
   const handleRunSimulation = () => {
-    // simulationConfig.setNumberOfRounds(Number.parseInt(rounds));
-    // const simulation = new Simulation(customGameSession, simulationConfig);
-    // simulation.run();
-    //
-    // setAverageRTP(simulation.getAverageRtp());
-    // setAveragePayout(simulation.getAveragePayout());
-    // setPayoutDeviation(simulation.getPayoutsStandardDeviation());
-    // setAverageWinPayout(simulation.getAveragePayout(false));
-    // setWinPayoutDeviation(simulation.getPayoutsStandardDeviation(false));
+    if (!session) return;
+
+    simulationConfig.setNumberOfRounds(Number.parseInt(rounds));
+    const simulation = new Simulation(session, simulationConfig);
+    simulation.run();
+
+    setAverageRTP(simulation.getAverageRtp());
+    setAveragePayout(simulation.getAveragePayout());
+    setPayoutDeviation(simulation.getPayoutsStandardDeviation());
+    setAverageWinPayout(simulation.getAveragePayout(false));
+    setWinPayoutDeviation(simulation.getPayoutsStandardDeviation(false));
   };
 
   const formatter = new Intl.NumberFormat();
